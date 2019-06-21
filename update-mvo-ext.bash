@@ -1,5 +1,3 @@
-set -e
-
 # Refresh build of plugin
 cd /mvo-ext-src
 mkdir -p build
