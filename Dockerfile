@@ -14,4 +14,8 @@ WORKDIR /MapViewerOnline
 ADD ./MapViewerOnline /MapViewerOnline
 RUN pip3 install -r python_packages.txt
 WORKDIR /MapViewerOnline/mapviewer.sessionserver
-CMD ["./startMvoServer.sh"]
+
+# Add NDS AFW SDK which can be extracted from official Ubuntu1804
+# release of the DatabaseInspector
+ENV AFW_SDK_DIR /ndsafw-sdk/sdk
+ADD ./ndsafw-sdk /ndsafw-sdk
