@@ -1,0 +1,19 @@
+{
+    "__comment": "Just modify/add/remove entries to configure available maps:",
+    "maps":
+    {
+        "map1":"/maps/ROOT.NDS"
+    },
+    "logging-categories":
+    {
+        "remoting.server.logging.category":true,
+        "logging.afw.http.server":true,
+        "org.nds.dbi.routing.api":true,
+        "nds.afw.mapviewer.model.loggingcat":true,
+        "nds.support.logging.category":true
+    },
+    "svg-export-dir-comment": [
+        "Make sure, that `svg-export-dir` is a path that is reachable from",
+        "both the mapviewer.sessionserver python runtime, as well as the mapviewerserver instances."],
+    "svg-export-dir": "/var/opt/nds/mvo/svg-export"
+}
