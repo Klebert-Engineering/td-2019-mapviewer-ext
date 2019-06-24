@@ -13,6 +13,6 @@ if [ -z "$MVO_RUNNING" ]; then
     echo "Starting MVO in the background..."
     export NDS_PLUGIN_PATH=/mvo-ext-src/build
     cd /MapViewerOnline/mapviewer.sessionserver
-    /MapViewerOnline/mapviewer.sessionserver/startMvoServer.sh > /dev/null 2>&1 &
+    /MapViewerOnline/mapviewer.sessionserver/startMvoServer.sh > /mvo-ext-src/log.txt 2>&1 &
     cd -
 fi

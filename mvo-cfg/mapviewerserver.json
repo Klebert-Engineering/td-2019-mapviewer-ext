@@ -6,9 +6,9 @@
     },
     "logging-categories":
     {
-        "remoting.server.logging.category":true,
-        "logging.afw.http.server":true,
-        "org.nds.dbi.routing.api":true,
+        "remoting.server.logging.category":false,
+        "logging.afw.http.server":false,
+        "org.nds.dbi.routing.api":false,
         "nds.afw.mapviewer.model.loggingcat":true,
         "nds.support.logging.category":true
     },
