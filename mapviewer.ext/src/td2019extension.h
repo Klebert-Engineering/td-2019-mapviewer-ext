@@ -18,6 +18,7 @@
 #define MAPVIEWER_EXTENSION_LOCMARK
 
 #include <plugin.mapviewer.backend/imapviewerextension.h>
+#include <QTimer>
 
 namespace ndsafw
 {
@@ -27,12 +28,27 @@ class MapViewerExtensionTd2019 : public QObject, public IMapViewerExtensionInsta
     Q_OBJECT
 
 public:
+    MapViewerExtensionTd2019(IMapDataProxy & proxy);
+
     bool initialize(IMapDataProxy& proxy, IMapViewerExtensionUserOptions& opts) override;
     void shutdown() override {}
 
+    void updateBookmarks() {}
+    void optionsChanged(IMapDataProxy& mapDataProxy, IMapViewerExtensionUserOptions& userOptions);
+    void leftClicked(IMapDataProxy& mapDataProxy, HighPrecWgs84 coordinate);
+
 private:
-    IMapViewerStylePtr style_;
-    static MapElementMetadata metaData_;
+    IMapViewerStylePtr wipBookmarkStyle_;
+    QStringList bookmarks_;
+
+    QString wipBookmarkBatchName_;
+
+    bool showBookmarks_ = true;    // Make sure to keep in sync with default value
+    bool placeBookmarks_ = false;  // Make sure to keep in sync with default value
+    QString bookmarkDescription;   // Make sure to keep in sync with default value
+
+    QTimer wipBookmarkTimeout_;
+    QTimer bookmarkEditDebounce_;
 };
 
 }

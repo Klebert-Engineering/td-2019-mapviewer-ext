@@ -33,8 +33,9 @@ bool MapViewerExtensionTd2019Plugin::initialize(const QStringList &, QString *)
     NDSAFW_COND_CRITICAL_AND_RETURN(!extensionReg,
                                     "Failed to retrieve mapviewer extension registry!",
                                     false);
-    extensionReg->registerExtension("Tooling Days 2019",
-                                    IMapViewerExtensionFactoryPtr(new MapViewerExtensionTd2019Factory));
+    extensionReg->registerExtension(
+        "Bookmarks",
+        IMapViewerExtensionFactoryPtr(new MapViewerExtensionTd2019Factory));
     return true;
 }
 

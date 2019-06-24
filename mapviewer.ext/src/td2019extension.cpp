@@ -27,50 +27,80 @@
 namespace ndsafw {
 
 namespace {
-    const QString SHOW_OPTION = "show";
-    const QString LOC_MARKER_BATCH = "locMarker";
+
+const QString SHOW_OPTION = "show";
+const QString PLACE_OPTION = "place";
+const QString CAPTION_OPTION = "caption";
+
+const QString WIP_BOOKMARK_BATCH = "wipBatch";
+
+const QString WIP_LABEL_STYLE = "wipLabelStyle";
+const QString WIP_POINT_STYLE = "wipPointStyle";
+
+static MapElementMetadata wipLabelMetadata = {
+    {MapElementMetadataKey::StyleName, WIP_LABEL_STYLE},
+    {MapElementMetadataKey::Flags, MapElementFlags::Unselectable},
+};
+
+static MapElementMetadata wipPointMetadata = {
+    {MapElementMetadataKey::StyleName, WIP_POINT_STYLE},
+    {MapElementMetadataKey::Flags, MapElementFlags::Unselectable},
+};
+}
+
+MapViewerExtensionTd2019::MapViewerExtensionTd2019(IMapDataProxy & proxy) {
+    connect(&wipBookmarkTimeout_, &QTimer::timeout, [&proxy, this](){
+        proxy.removeMapElementBatch(*this, wipBookmarkBatchName_);
+        wipBookmarkBatchName_ = false;
+    });
 }
 
 bool MapViewerExtensionTd2019::initialize(IMapDataProxy& proxy, IMapViewerExtensionUserOptions& opts)
 {
-    opts.addBool(SHOW_OPTION, "Show Marker", true, true, true);
-    style_ = proxy.newLabelStyle(AfwColor::White, 1.f, {
-        {IMapViewerLabelStyle::Left, "-50%"},
-        {IMapViewerLabelStyle::FontFamily, "sans-serif"},
-        {IMapViewerLabelStyle::TextShadow, "0px 1em 9px black"},
-        {IMapViewerLabelStyle::FontSize, "1.1em"},
-    });
+    opts.addBool(SHOW_OPTION, "Show Bookmarks", true, true, true);
+    opts.addBool(PLACE_OPTION, "Place Bookmarks", false, true, false);
+    opts.addString(CAPTION_OPTION, "Edit caption", "", "Edit caption here after placing bookmark", false);
 
-    proxy.onStyleForName(*this, [this](IMapDataProxy& /*proxy*/, QString const& /*styleName*/, MapGeomType /*geomType*/)
+    using namespace std::placeholders;
+
+    proxy.onStyleForName(*this, [this](IMapDataProxy& proxy, QString const& styleName, MapGeomType /*geomType*/) -> IMapViewerStylePtr
     {
-        return style_;
+        if (styleName == WIP_LABEL_STYLE) {
+            return proxy.newLabelStyle(AfwColor::Orange, 1.f, {
+                {IMapViewerLabelStyle::Left, "-50%"},
+                {IMapViewerLabelStyle::FontFamily, "sans-serif"},
+                {IMapViewerLabelStyle::TextShadow, "0px 1em 9px black"},
+                {IMapViewerLabelStyle::FontSize, "1.1em"},
+            });
+        }
+        else if (styleName == WIP_POINT_STYLE) {
+            return proxy.newPointStyle(AfwColor::Magenta);
+        }
+
+        return nullptr;
     });
 
-    proxy.onOptionValueChanged(*this, [this](IMapDataProxy& mapDataProxy, IMapViewerExtensionUserOptions& userOptions)
-    {
-        if (!userOptions.getBool(SHOW_OPTION))
-                mapDataProxy.removeMapElementBatch(*this, LOC_MARKER_BATCH);
-    });
-
-    proxy.onLeftClick(*this, [this](IMapDataProxy& mapDataProxy, HighPrecWgs84 coordinate)
-    {
-        if(!mapDataProxy.userOptions(*this).getBool(SHOW_OPTION))
-            return;
-
-        auto batch = mapDataProxy.newMapElementBatch(*this, LOC_MARKER_BATCH, PackedTileId(MortonCode::fromWgs84Coordinates(coordinate), 15));
-        batch->addLabelElement(coordinate, "&#x1F4CD;", metaData_);
-        batch->commit();
-    });
+    proxy.onPersistentUserOptionsParsed(*this, std::bind(&MapViewerExtensionTd2019::optionsChanged, this, _1, _2));
+    proxy.onOptionValueChanged(*this, std::bind(&MapViewerExtensionTd2019::optionsChanged, this, _1, _2));
+    proxy.onLeftClick(*this, std::bind(&MapViewerExtensionTd2019::leftClicked, this, _1, _2));
 
     return true;
 }
 
-MapElementMetadata MapViewerExtensionTd2019::metaData_ =
+void MapViewerExtensionTd2019::optionsChanged(IMapDataProxy &mapDataProxy, IMapViewerExtensionUserOptions &userOptions)
 {
-    {MapElementMetadataKey::StyleName, "LocationMarker"},
-    {MapElementMetadataKey::Type, MapElementType::Custom},
-    {MapElementMetadataKey::TypeName, "LocationMarker"},
-    {MapElementMetadataKey::Flags, MapElementFlags::Unselectable},
-};
+
+}
+
+void MapViewerExtensionTd2019::leftClicked(IMapDataProxy& mapDataProxy, HighPrecWgs84 coordinate)
+{
+    auto wipBatch = mapDataProxy.newMapElementBatch(*this, WIP_BOOKMARK_BATCH);
+    wipBatch->addLabelElement(coordinate, "[Edit description to add new bookmark]", wipLabelMetadata);
+    wipBatch->addPointElement(coordinate, wipPointMetadata);
+    wipBatch->commit();
+    wipBookmarkBatchName_ = WIP_BOOKMARK_BATCH;
+    wipBookmarkTimeout_.setSingleShot(true);
+    wipBookmarkTimeout_.start(5000);
+}
 
 }

@@ -20,9 +20,9 @@
 namespace ndsafw
 {
 
-IMapViewerExtensionInstancePtr MapViewerExtensionTd2019Factory::instance(IMapDataProxy &/*proxy*/) const
+IMapViewerExtensionInstancePtr MapViewerExtensionTd2019Factory::instance(IMapDataProxy & proxy) const
 {
-    return IMapViewerExtensionInstancePtr(new MapViewerExtensionTd2019());
+    return IMapViewerExtensionInstancePtr(new MapViewerExtensionTd2019(proxy));
 }
 
 }
