@@ -34,12 +34,12 @@ struct Bookmark {
     bool isPersistent;
 };
 
-class MapViewerExtensionTd2019 : public QObject, public IMapViewerExtensionInstance
+class BookmarksExt : public QObject, public IMapViewerExtensionInstance
 {
     Q_OBJECT
 
 public:
-    MapViewerExtensionTd2019(IMapDataProxy & proxy);
+    BookmarksExt(IMapDataProxy & proxy);
 
     bool initialize(IMapDataProxy& proxy, IMapViewerExtensionUserOptions& opts) override;
     void shutdown() override {}

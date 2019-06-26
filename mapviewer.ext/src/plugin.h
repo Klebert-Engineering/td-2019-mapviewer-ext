@@ -22,19 +22,19 @@
 namespace ndsafw
 {
 
-class MapViewerExtensionTd2019Plugin : public ExtensionSystem::IPlugin
+class BookmarksPlugin : public ExtensionSystem::IPlugin
 {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID "org.nds-association.mapviewer.extension.td2019")
+    Q_PLUGIN_METADATA(IID "org.nds-association.mapviewer.ext.bookmarks")
 
 public:
-    MapViewerExtensionTd2019Plugin() = default;
-    ~MapViewerExtensionTd2019Plugin() override = default;
+    BookmarksPlugin() = default;
+    ~BookmarksPlugin() override = default;
 
-    MapViewerExtensionTd2019Plugin(const MapViewerExtensionTd2019Plugin& p) = delete;
-    MapViewerExtensionTd2019Plugin(MapViewerExtensionTd2019Plugin&& p) = delete;
-    MapViewerExtensionTd2019Plugin& operator=(const MapViewerExtensionTd2019Plugin& p) = delete;
-    MapViewerExtensionTd2019Plugin& operator=(MapViewerExtensionTd2019Plugin&& p) = delete;
+    BookmarksPlugin(const BookmarksPlugin& p) = delete;
+    BookmarksPlugin(BookmarksPlugin&& p) = delete;
+    BookmarksPlugin& operator=(const BookmarksPlugin& p) = delete;
+    BookmarksPlugin& operator=(BookmarksPlugin&& p) = delete;
 
 public:
     bool initialize(const QStringList &arguments, QString *errorString) override;

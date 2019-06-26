@@ -23,7 +23,7 @@
 #include <functional>
 #include <lib.afw.core/diagnostics.h>
 
-#include "td2019extension.h"
+#include "extension.h"
 
 namespace ndsafw {
 
@@ -65,7 +65,7 @@ static MapElementMetadata pointMetadata = {
 };
 }
 
-MapViewerExtensionTd2019::MapViewerExtensionTd2019(IMapDataProxy & proxy)
+BookmarksExt::BookmarksExt(IMapDataProxy & proxy)
 {
     connect(&transientTimeout_, &QTimer::timeout, [&proxy, this]()
     {
@@ -119,7 +119,7 @@ MapViewerExtensionTd2019::MapViewerExtensionTd2019(IMapDataProxy & proxy)
     db_.setDatabaseName(SQLITE_FILENAME);
 }
 
-bool MapViewerExtensionTd2019::initialize(IMapDataProxy& proxy, IMapViewerExtensionUserOptions& opts)
+bool BookmarksExt::initialize(IMapDataProxy& proxy, IMapViewerExtensionUserOptions& opts)
 {
     if (!db_.open()) {
         NDSAFW_CRITICAL(QString("Cannot open database '%1'").arg(SQLITE_FILENAME));
@@ -167,15 +167,15 @@ bool MapViewerExtensionTd2019::initialize(IMapDataProxy& proxy, IMapViewerExtens
         return nullptr;
     });
 
-    proxy.onPersistentUserOptionsParsed(*this, std::bind(&MapViewerExtensionTd2019::optionsChanged, this, _1, _2));
-    proxy.onOptionValueChanged(*this, std::bind(&MapViewerExtensionTd2019::optionsChanged, this, _1, _2));
-    proxy.onLeftClick(*this, std::bind(&MapViewerExtensionTd2019::leftClicked, this, _1, _2));
-    proxy.onRequestAttributes(*this, std::bind(&MapViewerExtensionTd2019::attribsRequested, this, _1, _2));
+    proxy.onPersistentUserOptionsParsed(*this, std::bind(&BookmarksExt::optionsChanged, this, _1, _2));
+    proxy.onOptionValueChanged(*this, std::bind(&BookmarksExt::optionsChanged, this, _1, _2));
+    proxy.onLeftClick(*this, std::bind(&BookmarksExt::leftClicked, this, _1, _2));
+    proxy.onRequestAttributes(*this, std::bind(&BookmarksExt::attribsRequested, this, _1, _2));
 
     return true;
 }
 
-void MapViewerExtensionTd2019::optionsChanged(IMapDataProxy &proxy, IMapViewerExtensionUserOptions &userOptions)
+void BookmarksExt::optionsChanged(IMapDataProxy &proxy, IMapViewerExtensionUserOptions &userOptions)
 {
     QString newBookmarkCaption = userOptions.getString(CAPTION_OPTION);
     bool newShowBookmarks = userOptions.getBool(SHOW_OPTION);
@@ -211,7 +211,7 @@ void MapViewerExtensionTd2019::optionsChanged(IMapDataProxy &proxy, IMapViewerEx
     updateBookmarks(proxy);
 }
 
-void MapViewerExtensionTd2019::leftClicked(IMapDataProxy& proxy, HighPrecWgs84 location)
+void BookmarksExt::leftClicked(IMapDataProxy& proxy, HighPrecWgs84 location)
 {
     proxy.userOptions(*this).setOptionValue(CAPTION_OPTION, "");
     bookmarkCaption_ = "";
@@ -229,7 +229,7 @@ void MapViewerExtensionTd2019::leftClicked(IMapDataProxy& proxy, HighPrecWgs84 l
     }
 }
 
-QStringList MapViewerExtensionTd2019::attribsRequested(IMapDataProxy& proxy, MapElementMetadata const& metadata)
+QStringList BookmarksExt::attribsRequested(IMapDataProxy& proxy, MapElementMetadata const& metadata)
 {
     uint32_t id = metadata[MapElementMetadataKey::AppModelId].toUInt();
     if (bookmarks_.contains(id)) {
@@ -243,7 +243,7 @@ QStringList MapViewerExtensionTd2019::attribsRequested(IMapDataProxy& proxy, Map
     return {};
 }
 
-void MapViewerExtensionTd2019::updateBookmarks(IMapDataProxy& proxy)
+void BookmarksExt::updateBookmarks(IMapDataProxy& proxy)
 {
     if (showBookmarks_ && !bookmarks_.empty()) {
         auto batch = proxy.newMapElementBatch(*this, BOOKMARK_BATCH);
@@ -267,7 +267,7 @@ void MapViewerExtensionTd2019::updateBookmarks(IMapDataProxy& proxy)
 }
 
 
-void MapViewerExtensionTd2019::cancelNewBookmark(ndsafw::IMapDataProxy &proxy) {
+void BookmarksExt::cancelNewBookmark(ndsafw::IMapDataProxy &proxy) {
     if (underConstruction_ && !underConstruction_->isPersistent) {
         bookmarks_.remove(underConstruction_->id);
         underConstruction_ = nullptr;
@@ -276,7 +276,7 @@ void MapViewerExtensionTd2019::cancelNewBookmark(ndsafw::IMapDataProxy &proxy) {
     }
 }
 
-void MapViewerExtensionTd2019::startNewBookmark(IMapDataProxy& proxy)
+void BookmarksExt::startNewBookmark(IMapDataProxy& proxy)
 {
     // Only allow one transient bookmark at a time
     if (!underConstruction_ || underConstruction_->isPersistent) {
@@ -305,7 +305,7 @@ void MapViewerExtensionTd2019::startNewBookmark(IMapDataProxy& proxy)
     updateBookmarks(proxy);
 }
 
-void MapViewerExtensionTd2019::persistenceLoadBookmarks()
+void BookmarksExt::persistenceLoadBookmarks()
 {
     QSqlQuery q("select * from bookmarks", db_);
     if (!q.exec() || !q.isActive()) {
@@ -333,7 +333,7 @@ void MapViewerExtensionTd2019::persistenceLoadBookmarks()
     NDSAFW_CDEBUG(logCat, QString("Loaded %1 bookmarks.").arg(bookmarks_.size()));
 }
 
-void MapViewerExtensionTd2019::persistenceUpdateBookmark(Bookmark const& bm)
+void BookmarksExt::persistenceUpdateBookmark(Bookmark const& bm)
 {
     QSqlQuery q(
         QString("replace into bookmarks (id, lon, lat, caption) values (%1, %2, %3, '%4')")
@@ -349,7 +349,7 @@ void MapViewerExtensionTd2019::persistenceUpdateBookmark(Bookmark const& bm)
     }
 }
 
-void MapViewerExtensionTd2019::persistenceDeleteBookmark(Bookmark const& bm) {
+void BookmarksExt::persistenceDeleteBookmark(Bookmark const& bm) {
     QSqlQuery q(
         QString("delete from bookmarks where id=%1").arg(bm.id)
         , db_);

@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.2)
-project (mapviewer.extension.td2019)
+project (mapviewer.ext.bookmarks)
 
 if (EXISTS ${AFW_SDK_DIR})
     add_subdirectory (${AFW_SDK_DIR} ${CMAKE_CURRENT_BINARY_DIR}/afwsdk)
@@ -27,12 +27,12 @@ elseif (APPLE)
 endif()
 
 add_library (${PROJECT_NAME} ${NDSAFW_PLUGIN_LINKING}
-  src/td2019extension.cpp
-  src/td2019extension.h
-  src/td2019extensionfactory.cpp
-  src/td2019extensionfactory.h
-  src/td2019plugin.cpp
-  src/td2019plugin.h
+  src/extension.cpp
+  src/extension.h
+  src/extensionfactory.cpp
+  src/extensionfactory.h
+  src/plugin.cpp
+  src/plugin.h
 
   ${PROJECT_NAME}.pluginspec
   )

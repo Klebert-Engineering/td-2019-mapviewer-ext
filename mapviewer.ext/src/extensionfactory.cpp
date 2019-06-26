@@ -14,20 +14,16 @@
 *
 *******************************************************************************/
 
-#ifndef MAPVIEWER_EXTENSION_LOCMARKFACTORY
-#define MAPVIEWER_EXTENSION_LOCMARKFACTORY
-
-#include <plugin.mapviewer.backend/imapviewerextension.h>
+#include "extensionfactory.h"
+#include "extension.h"
 
 namespace ndsafw
 {
 
-class MapViewerExtensionTd2019Factory : public IMapViewerExtensionFactory
+IMapViewerExtensionInstancePtr BookmarksExtFactory::instance(IMapDataProxy & proxy) const
 {
-public:
-    IMapViewerExtensionInstancePtr instance(IMapDataProxy &proxy) const override;
-};
+    return IMapViewerExtensionInstancePtr(new BookmarksExt(proxy));
+}
 
 }
 
-#endif // MAPVIEWER_EXTENSION_LOCMARKFACTORY
