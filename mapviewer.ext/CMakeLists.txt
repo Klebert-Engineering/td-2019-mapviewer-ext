@@ -7,7 +7,7 @@ else ()
     message (FATAL_ERROR "AFW_SDK_DIR (${AFW_SDK_DIR}) missing, please set it.")
 endif ()
 
-find_package (Qt5 COMPONENTS Core Concurrent REQUIRED)
+find_package (Qt5 COMPONENTS Core Concurrent Sql REQUIRED)
 
 set (CMAKE_AUTOMOC ON)
 set (CXX_STANDARD_REQUIRED ON)
@@ -45,6 +45,7 @@ target_link_libraries (${PROJECT_NAME}
   extensionsystem
   Qt5::Core
   Qt5::Concurrent
+  Qt5::Sql
   )
 
 add_custom_command(TARGET ${PROJECT_NAME} 

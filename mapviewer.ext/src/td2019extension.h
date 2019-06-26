@@ -19,9 +19,20 @@
 
 #include <plugin.mapviewer.backend/imapviewerextension.h>
 #include <QTimer>
+#include <QVector>
+
+#include <QSqlDatabase>
+#include <QSqlQuery>
 
 namespace ndsafw
 {
+
+struct Bookmark {
+    uint32_t id;
+    QString caption;
+    HighPrecWgs84 location;
+    bool isPersistent;
+};
 
 class MapViewerExtensionTd2019 : public QObject, public IMapViewerExtensionInstance
 {
@@ -33,22 +44,33 @@ public:
     bool initialize(IMapDataProxy& proxy, IMapViewerExtensionUserOptions& opts) override;
     void shutdown() override {}
 
-    void updateBookmarks() {}
+    void updateBookmarks(IMapDataProxy& mapDataProxy);
     void optionsChanged(IMapDataProxy& mapDataProxy, IMapViewerExtensionUserOptions& userOptions);
     void leftClicked(IMapDataProxy& mapDataProxy, HighPrecWgs84 coordinate);
+    QStringList attribsRequested(IMapDataProxy& proxy, MapElementMetadata const& metadata);
+
+    void startNewBookmark(IMapDataProxy& proxy);
+    void cancelNewBookmark(IMapDataProxy& proxy);
 
 private:
-    IMapViewerStylePtr wipBookmarkStyle_;
-    QStringList bookmarks_;
-
-    QString wipBookmarkBatchName_;
+    QMap<uint32_t, Bookmark> bookmarks_;
+    Bookmark* underConstruction_ = nullptr; // points to element in bookmarks vec
+    uint32_t transientCountdown_ = 0;
+    HighPrecWgs84 clickedLocation_;
 
     bool showBookmarks_ = true;    // Make sure to keep in sync with default value
     bool placeBookmarks_ = false;  // Make sure to keep in sync with default value
-    QString bookmarkDescription;   // Make sure to keep in sync with default value
+    QString bookmarkCaption_;      // Make sure to keep in sync with default value
 
-    QTimer wipBookmarkTimeout_;
+    QTimer transientTimeout_;
     QTimer bookmarkEditDebounce_;
+    QTimer newBookmarkTimer_;
+
+    QSqlDatabase db_;
+
+    void persistenceLoadBookmarks();
+    void persistenceUpdateBookmark(Bookmark const& bm);
+    void persistenceDeleteBookmark(Bookmark const& bm);
 };
 
 }

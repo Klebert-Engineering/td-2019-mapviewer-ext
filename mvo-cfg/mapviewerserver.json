@@ -10,7 +10,8 @@
         "logging.afw.http.server":false,
         "org.nds.dbi.routing.api":false,
         "nds.afw.mapviewer.model.loggingcat":true,
-        "nds.support.logging.category":true
+        "nds.support.logging.category":true,
+        "mapviewer.bookmarks": true
     },
     "svg-export-dir-comment": [
         "Make sure, that `svg-export-dir` is a path that is reachable from",
