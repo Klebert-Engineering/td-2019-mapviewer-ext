@@ -10,7 +10,7 @@ cmake --build .
 # Start MVO on demand
 MVO_RUNNING=$(ps | grep startMvoServer)
 if [ -z "$MVO_RUNNING" ]; then
-    echo "Starting MVO in the background..."
+    echo "-> Starting MVO in the background (localhost:5000)"
     export NDS_PLUGIN_PATH=/mvo-ext-src/build
 
     cd /MapViewerOnline/mapviewer.server/plugins/mapviewer.backend
@@ -26,6 +26,10 @@ if [ -z "$MVO_RUNNING" ]; then
 
     cd /MapViewerOnline/mapviewer.sessionserver
     /MapViewerOnline/mapviewer.sessionserver/startMvoServer.sh > /mvo-ext-src/log.txt 2>&1 &
+
+    echo "-> View docs on localhost:80"
+    cd /ndsafw-sdk/sdk/sdk-doc
+    python3 -m http.server 80 2>&1 > /dev/null &
 
     cd /mvo-ext-src/build
 fi
