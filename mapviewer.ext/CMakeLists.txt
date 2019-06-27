@@ -10,6 +10,7 @@ endif ()
 find_package (Qt5 COMPONENTS Core Concurrent Sql REQUIRED)
 
 set (CMAKE_AUTOMOC ON)
+set (CMAKE_AUTORCC ON)
 set (CXX_STANDARD_REQUIRED ON)
 
 if(WIN32)
@@ -27,6 +28,9 @@ elseif (APPLE)
 endif()
 
 add_library (${PROJECT_NAME} ${NDSAFW_PLUGIN_LINKING}
+
+  resources.qrc
+
   src/extension.cpp
   src/extension.h
   src/extensionfactory.cpp
