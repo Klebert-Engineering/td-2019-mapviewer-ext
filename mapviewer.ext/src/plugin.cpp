@@ -18,27 +18,28 @@
 #include <plugin.mapviewer.backend/imapviewerextensionregistry.h>
 #include <lib.extensionsystem/extensionsystem/pluginmanager.h>
 
-#include "td2019plugin.h"
-#include "td2019extensionfactory.h"
+#include "plugin.h"
+#include "extensionfactory.h"
 
 namespace ndsafw {
 
-void MapViewerExtensionTd2019Plugin::extensionsInitialized()
+void BookmarksPlugin::extensionsInitialized()
 {
 }
 
-bool MapViewerExtensionTd2019Plugin::initialize(const QStringList &, QString *)
+bool BookmarksPlugin::initialize(const QStringList &, QString *)
 {
     auto extensionReg = ExtensionSystem::PluginManager::getObject<IMapViewerExtensionRegistry>();
     NDSAFW_COND_CRITICAL_AND_RETURN(!extensionReg,
                                     "Failed to retrieve mapviewer extension registry!",
                                     false);
-    extensionReg->registerExtension("Tooling Days 2019",
-                                    IMapViewerExtensionFactoryPtr(new MapViewerExtensionTd2019Factory));
+    extensionReg->registerExtension(
+        "Bookmarks",
+        IMapViewerExtensionFactoryPtr(new BookmarksExtFactory));
     return true;
 }
 
-ExtensionSystem::IPlugin::ShutdownFlag MapViewerExtensionTd2019Plugin::aboutToShutdown() {
+ExtensionSystem::IPlugin::ShutdownFlag BookmarksPlugin::aboutToShutdown() {
     return ExtensionSystem::IPlugin::SynchronousShutdown;
 }
 

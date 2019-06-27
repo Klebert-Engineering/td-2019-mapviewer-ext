@@ -14,27 +14,16 @@
 *
 *******************************************************************************/
 
-#ifndef MAPVIEWER_EXTENSION_LOCMARK
-#define MAPVIEWER_EXTENSION_LOCMARK
-
-#include <plugin.mapviewer.backend/imapviewerextension.h>
+#include "extensionfactory.h"
+#include "extension.h"
 
 namespace ndsafw
 {
 
-class MapViewerExtensionTd2019 : public QObject, public IMapViewerExtensionInstance
+IMapViewerExtensionInstancePtr BookmarksExtFactory::instance(IMapDataProxy & proxy) const
 {
-    Q_OBJECT
-
-public:
-    bool initialize(IMapDataProxy& proxy, IMapViewerExtensionUserOptions& opts) override;
-    void shutdown() override {}
-
-private:
-    IMapViewerStylePtr style_;
-    static MapElementMetadata metaData_;
-};
+    return IMapViewerExtensionInstancePtr(new BookmarksExt(proxy));
+}
 
 }
 
-#endif // MAPVIEWER_EXTENSION_LOCMARK

@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.2)
-project (mapviewer.extension.td2019)
+project (mapviewer.ext.bookmarks)
 
 if (EXISTS ${AFW_SDK_DIR})
     add_subdirectory (${AFW_SDK_DIR} ${CMAKE_CURRENT_BINARY_DIR}/afwsdk)
@@ -7,9 +7,10 @@ else ()
     message (FATAL_ERROR "AFW_SDK_DIR (${AFW_SDK_DIR}) missing, please set it.")
 endif ()
 
-find_package (Qt5 COMPONENTS Core Concurrent REQUIRED)
+find_package (Qt5 COMPONENTS Core Concurrent Sql REQUIRED)
 
 set (CMAKE_AUTOMOC ON)
+set (CMAKE_AUTORCC ON)
 set (CXX_STANDARD_REQUIRED ON)
 
 if(WIN32)
@@ -27,12 +28,15 @@ elseif (APPLE)
 endif()
 
 add_library (${PROJECT_NAME} ${NDSAFW_PLUGIN_LINKING}
-  src/td2019extension.cpp
-  src/td2019extension.h
-  src/td2019extensionfactory.cpp
-  src/td2019extensionfactory.h
-  src/td2019plugin.cpp
-  src/td2019plugin.h
+
+  resources.qrc
+
+  src/extension.cpp
+  src/extension.h
+  src/extensionfactory.cpp
+  src/extensionfactory.h
+  src/plugin.cpp
+  src/plugin.h
 
   ${PROJECT_NAME}.pluginspec
   )
@@ -45,6 +49,7 @@ target_link_libraries (${PROJECT_NAME}
   extensionsystem
   Qt5::Core
   Qt5::Concurrent
+  Qt5::Sql
   )
 
 add_custom_command(TARGET ${PROJECT_NAME} 
