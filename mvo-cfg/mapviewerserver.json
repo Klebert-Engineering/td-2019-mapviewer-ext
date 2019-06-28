@@ -2,7 +2,9 @@
     "__comment": "Just modify/add/remove entries to configure available maps:",
     "maps":
     {
-        "map1":"/maps/ROOT.NDS"
+        "ECE":"/var/lib/data/nds/databases/NTG7/DB_MBW223SO_ECE_ECE_R_1120_E70.0261_MasterHDD/nav_ECE/ROOT.NDS",
+        "NAM":"/var/lib/data/nds/databases/NTG7/DB_MBW223SO_USA_NAM_R_1100_E70.0260_MasterHDD/nav_NAM/ROOT.NDS",
+        "Germany":"/var/lib/data/nds/databases/NTG7/DB_MBW223SO_ECE_ECE_R_1120_E70.0261_Germany/nav_ECE/ROOT.NDS"
     },
     "logging-categories":
     {

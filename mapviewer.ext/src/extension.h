@@ -23,6 +23,9 @@
 
 #include <QSqlDatabase>
 #include <QSqlQuery>
+#include <QtNetwork/qnetworkaccessmanager.h>
+#include <QtNetwork/QNetworkReply>
+#include <QtNetwork/QNetworkRequest>
 
 namespace ndsafw
 {
@@ -31,8 +34,8 @@ struct Bookmark {
     uint32_t id;
     QString caption;
     HighPrecWgs84 location;
+    uint32_t type;
     bool isPersistent;
-    QString timestamp;
 };
 
 class BookmarksExt : public QObject, public IMapViewerExtensionInstance
@@ -49,8 +52,6 @@ public:
     void optionsChanged(IMapDataProxy& mapDataProxy, IMapViewerExtensionUserOptions& userOptions);
     void leftClicked(IMapDataProxy& mapDataProxy, HighPrecWgs84 coordinate);
     QStringList attribsRequested(IMapDataProxy& proxy, MapElementMetadata const& metadata);
-    void searchRequested(IMapDataProxy& proxy, QString name, QStringList const& arguments, IMapViewerExtensionUserOptions const& opts, QString& resultError);
-    void searchTerminateRequested(IMapDataProxy& proxy, QString name);
 
     void startNewBookmark(IMapDataProxy& proxy);
     void cancelNewBookmark(IMapDataProxy& proxy);
@@ -60,7 +61,6 @@ private:
     Bookmark* underConstruction_ = nullptr; // points to element in bookmarks vec
     uint32_t transientCountdown_ = 0;
     HighPrecWgs84 clickedLocation_;
-    QString searchFilter_;
 
     bool showBookmarks_ = true;    // Make sure to keep in sync with default value
     bool placeBookmarks_ = false;  // Make sure to keep in sync with default value
@@ -71,6 +71,7 @@ private:
     QTimer newBookmarkTimer_;
 
     QSqlDatabase db_;
+    QNetworkAccessManager network_;
 
     void persistenceLoadBookmarks();
     void persistenceUpdateBookmark(Bookmark const& bm);

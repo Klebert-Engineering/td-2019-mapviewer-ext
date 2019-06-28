@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
-        <file alias="bookmark.png">bookmark.png</file>
+        <file alias="bookmark0.png">bookmark0.png</file>
+        <file alias="bookmark1.png">bookmark1.png</file>
     </qresource>
 </RCC>
