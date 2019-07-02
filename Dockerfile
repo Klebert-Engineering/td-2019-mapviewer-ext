@@ -3,7 +3,7 @@ FROM artifactory.nds-association.org/tooling-dockerreg/afw-builder-ubuntu1804:la
 RUN apt-get update
 
 # Install python runtime
-RUN apt-get install -y python3.6 python3-pip psmisc
+RUN apt-get install -y python3.6 python3-pip psmisc openssh-server
 
 # Package with MapViewerOnline which can be extracted from 
 # corresponding MVO image

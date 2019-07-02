@@ -16,23 +16,24 @@
 
 #include <QtConcurrentRun>
 #include <QDateTime>
+#include <QEvent>
+#include <QEventLoop>
 #include <QFile>
 #include <QSqlError>
 #include <QSqlRecord>
 #include <QSqlResult>
 #include <functional>
 #include <lib.afw.core/diagnostics.h>
-
+#include <QJsonObject>
+#include <QJsonDocument>
 #include "extension.h"
-#include <QtConcurrent>
 
 namespace ndsafw {
 
 namespace {
 
 auto& logCat = NDSAFW_LOGCAT("mapviewer.bookmarks");
-const QString SQLITE_FILENAME = "bookmarks.sqlite";
-const QString BOOKMARKS_SEARCH = "bookmarks";
+const QString SQLITE_FILENAME = "/mvo-ext-src/bookmarks.sqlite";
 
 const QString SHOW_OPTION = "show";
 const QString PLACE_OPTION = "place";
@@ -42,6 +43,7 @@ const QString BOOKMARK_BATCH = "bookmarks";
 
 const QString LABEL_STYLE = "labelStyle";
 const QString POINT_STYLE = "pointStyle";
+const QString POINT_STYLE1 = "pointStyle1";
 const QString WIP_LABEL_STYLE = "wipLabelStyle";
 const QString WIP_POINT_STYLE = "wipPointStyle";
 
@@ -129,7 +131,7 @@ bool BookmarksExt::initialize(IMapDataProxy& proxy, IMapViewerExtensionUserOptio
     }
     else {
         // Create bookmarks table if it doesn't exist yet
-        QSqlQuery q("CREATE TABLE IF NOT EXISTS bookmarks (id INTEGER UNIQUE, lon REAL, lat REAL, caption TEXT, timestamp TEXT)", db_);
+        QSqlQuery q("CREATE TABLE IF NOT EXISTS bookmarks (id INTEGER UNIQUE, lon REAL, lat REAL, caption TEXT, type INTEGER)", db_);
         if (q.exec())
             NDSAFW_CDEBUG(logCat, "Initialized bookmarks persistence");
         persistenceLoadBookmarks();
@@ -138,7 +140,6 @@ bool BookmarksExt::initialize(IMapDataProxy& proxy, IMapViewerExtensionUserOptio
     opts.addBool(SHOW_OPTION, "Show Bookmarks", true, true, true);
     opts.addBool(PLACE_OPTION, "Place Bookmarks", false, true, false);
     opts.addString(CAPTION_OPTION, "Edit caption", "", "Edit caption here after placing bookmark", false);
-    opts.addSearchAction(BOOKMARKS_SEARCH, "Filter Bookmarks");
 
     using namespace std::placeholders;
 
@@ -156,7 +157,12 @@ bool BookmarksExt::initialize(IMapDataProxy& proxy, IMapViewerExtensionUserOptio
             return proxy.newPointStyle(AfwColor::LightSkyBlue);
         }
         else if (styleName == POINT_STYLE) {
-            return proxy.newPointStyle(QString(":/bookmark.png"), 1., 32.);
+            return proxy.newPointStyle(QString(":/bookmark0.png"), 1., 64.);
+            // return proxy.newPointStyle(AfwColor::Yellow);
+        }
+        else if (styleName == POINT_STYLE1) {
+            return proxy.newPointStyle(QString(":/bookmark1.png"), 1., 64.);
+            // return proxy.newPointStyle(AfwColor::Yellow);
         }
         else if (styleName == LABEL_STYLE) {
             return proxy.newLabelStyle(AfwColor::Yellow, 1.f, {
@@ -174,8 +180,6 @@ bool BookmarksExt::initialize(IMapDataProxy& proxy, IMapViewerExtensionUserOptio
     proxy.onOptionValueChanged(*this, std::bind(&BookmarksExt::optionsChanged, this, _1, _2));
     proxy.onLeftClick(*this, std::bind(&BookmarksExt::leftClicked, this, _1, _2));
     proxy.onRequestAttributes(*this, std::bind(&BookmarksExt::attribsRequested, this, _1, _2));
-    proxy.onSearchActionRequested(*this, std::bind(&BookmarksExt::searchRequested, this, _1, _2, _3, _4, _5));
-    proxy.onSearchActionTerminateRequested(*this, std::bind(&BookmarksExt::searchTerminateRequested, this, _1, _2));
 
     return true;
 }
@@ -245,32 +249,30 @@ QStringList BookmarksExt::attribsRequested(IMapDataProxy& proxy, MapElementMetad
         proxy.userOptions(*this).setOptionValue(CAPTION_OPTION, underConstruction_->caption);
         bookmarkCaption_ = underConstruction_->caption;
 
-        // Show timestamp in attribute panel
-        QtConcurrent::run([&proxy, metadata, this](){
+        const auto url = QString("https://secret_url");
+        const auto rofl_meter = QString(std::to_string(underConstruction_->location.latitude()).c_str()) + QString(",") + QString(std::to_string(underConstruction_->location.longitude()).c_str());
+        qDebug() << url + rofl_meter;
+        auto reply = network_.get(QNetworkRequest(QUrl(url + rofl_meter)));
+        QEventLoop loop;
+        connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+        loop.exec();
+
+        auto answer = reply->readAll();
+        qDebug() << answer;
+        auto json = QJsonDocument::fromJson(answer);
+        auto words = json.object()["words"].toVariant().toString();
+        qDebug() << words;
+
+        QtConcurrent::run([&proxy, words, metadata, this]() {
             auto panel = proxy.newAttributePanel(*this);
-            panel->addAttrib("Created on", underConstruction_->timestamp);
-            panel->commit(metadata[MapElementMetadataKey::VisualId].toUInt(), 0);        
+            panel->addAttrib("type", underConstruction_->type);
+            panel->addAttrib("what3words", QString("///") + words);
+            panel->commit(metadata[MapElementMetadataKey::VisualId].toUInt(), 0);
         });
+
     }
 
-    return {"Test Panel"};
-}
-
-void BookmarksExt::searchRequested(IMapDataProxy& proxy, QString name, QStringList const& arguments, IMapViewerExtensionUserOptions const& opts, QString& resultError)
-{
-    if (arguments.size() < 1) {
-        resultError = "Need a filter string!";
-        return;
-    }
-    proxy.setStatusMessage(*this, QString("Searching for %1").arg(arguments[0]));
-    searchFilter_ = arguments[0].toLower();
-    updateBookmarks(proxy);
-}
-
-void BookmarksExt::searchTerminateRequested(IMapDataProxy& proxy, QString name) {
-    searchFilter_ = "";
-    proxy.setStatusMessage(*this, "");
-    updateBookmarks(proxy);
+    return {"More info"};
 }
 
 void BookmarksExt::updateBookmarks(IMapDataProxy& proxy)
@@ -279,14 +281,21 @@ void BookmarksExt::updateBookmarks(IMapDataProxy& proxy)
         auto batch = proxy.newMapElementBatch(*this, BOOKMARK_BATCH);
         for (auto const& bm : bookmarks_)
         {
-            if (bm.isPersistent)
-            {
-                if (!searchFilter_.isEmpty() && !bm.caption.toLower().contains(searchFilter_)) {
-                    continue;
-                }
+            if (bm.isPersistent) {
                 batch->addLabelElement(bm.location, bm.caption, labelMetadata);
                 pointMetadata[MapElementMetadataKey::AppModelId] = bm.id;
                 pointMetadata[MapElementMetadataKey::VisualLabel] = QString("Bookmark #%1").arg(bm.id);
+
+                pointMetadata[MapElementMetadataKey::UserMetadata] = bm.type;
+                if (bm.type == 1)
+                {
+                    pointMetadata[MapElementMetadataKey::StyleName] = POINT_STYLE1;
+                }
+                else
+                {
+                    pointMetadata[MapElementMetadataKey::StyleName] = POINT_STYLE;
+                }
+
                 batch->addPointElement(bm.location, pointMetadata);
             }
             else {
@@ -322,8 +331,8 @@ void BookmarksExt::startNewBookmark(IMapDataProxy& proxy)
             newId,
             "Edit description to add new bookmark.",
             clickedLocation_,
-            false,
-            QDateTime::currentDateTime().toString()
+            1,
+            false
         };
         underConstruction_ = &bookmarks_[newId];
     }
@@ -355,15 +364,15 @@ void BookmarksExt::persistenceLoadBookmarks()
     int lonCol = rec.indexOf("lon");
     int latCol = rec.indexOf("lat");
     int capCol = rec.indexOf("caption");
-    int tsCol = rec.indexOf("timestamp");
+    int typeCol = rec.indexOf("type");
 
     while (q.next()) {
         bookmarks_[q.value(idCol).toUInt()] = Bookmark{
             q.value(idCol).toUInt(),
             q.value(capCol).toString().replace("\\'", "'"),
             HighPrecWgs84{q.value(lonCol).toDouble(), q.value(latCol).toDouble()},
-            true,
-            q.value(tsCol).toString()
+            q.value(typeCol).toUInt(),
+            true
         };
     }
 
@@ -373,12 +382,12 @@ void BookmarksExt::persistenceLoadBookmarks()
 void BookmarksExt::persistenceUpdateBookmark(Bookmark const& bm)
 {
     QSqlQuery q(
-        QString("replace into bookmarks (id, lon, lat, caption, timestamp) values (%1, %2, %3, '%4', '%5')")
+        QString("replace into bookmarks (id, lon, lat, caption, type) values (%1, %2, %3, '%4', %5)")
         .arg(bm.id)
         .arg(bm.location.longitude())
         .arg(bm.location.latitude())
         .arg(QString(bm.caption).replace("'", "\\'"))
-        .arg(bm.timestamp)
+        .arg(bm.type)
     , db_);
     if (!q.exec() || !q.isActive()) {
         NDSAFW_CWARNING(logCat, QString("Failed to execute query %1: %2")
